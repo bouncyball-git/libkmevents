@@ -39,7 +39,25 @@ static int stdin_ready(int timeout)
 
 void bale_out(const char *msg)
 {
-	set_mouse_trap(OFF, REP_BTN_PUSH | REP_HIGHLIGH | REP_BTN_MOVE | REP_ALL_MOVE | ENC_UNI_UTF8 | ENC_DECIMAL1 | ENC_DECIMAL2);
+	set_mouse_trap(OFF, 
+		SET_VT200_MOUSE |
+		SET_VT200_HIGHLIGHT_MOUSE |
+		SET_BTN_EVENT_MOUSE |
+		SET_ANY_EVENT_MOUSE |
+		SET_FOCUS_EVENT_MOUSE |
+		SET_ALTERNATE_SCROLL |
+		SET_EXT_MODE_MOUSE |
+		SET_SGR_EXT_MODE_MOUSE |
+		SET_URXVT_EXT_MODE_MOUSE |
+		SET_PIXEL_POSITION_MOUSE |
+		SET_BUTTON1_MOVE_POINT |
+		SET_BUTTON2_MOVE_POINT |
+		SET_DBUTTON3_DELETE |
+		SET_PASTE_IN_BRACKET |
+		SET_PASTE_QUOTE |
+		SET_PASTE_LITERAL_NL
+	);
+
 	set_term_attr(OFF);
 	if(msg) { perror(msg); exit(EXIT_FAILURE); }
 	exit(EXIT_SUCCESS);
@@ -76,26 +94,25 @@ void set_term_attr(int mode)
 
 void set_mouse_trap(int mode, int mt_flag)
 {
-	char ts[9] = { 0 }, tc[7] = { 0, 1, 2, 3, 5, 6, 15 };
+	char ts[9] = { 0 };
+	static int tc[16] = { 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1015, 1016, 2001, 2002, 2003, 2004,2005, 2006 };
 	switch(mode) {
 		case ON: // Activate mouse traps
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < 16; i++) {
 				if(mt_flag & (1<<i)) {
-					if(sprintf(ts, "\e[?%dh", tc[i] + 1000) < 8) {
+					if(sprintf(ts, "\e[?%dh", tc[i]) < 8) {
 						bale_out("Error: sprintf\r\n");
 					};
-					//puts(ts);
 					write(fileno(stdout), ts, 8);
 				}
 			}
 			break;
 	 	case OFF: // Deactivate mouse traps
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < 16; i++) {
 				if(mt_flag & (1<<i)) {
-					if(sprintf(ts, "\e[?%dl", tc[i] + 1000) < 8) {
+					if(sprintf(ts, "\e[?%dl", tc[i]) < 8) {
 						bale_out("Error: sprintf\r\n");
 					};
-					//puts(ts);
 					write(fileno(stdout), ts, 8);
 				}
 			}

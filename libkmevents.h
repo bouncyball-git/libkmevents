@@ -24,15 +24,24 @@ enum control_chars {
 	CTRL_P, CTRL_Q, CTRL_R, CTRL_S, CTRL_T, CTRL_U, CTRL_V, CTRL_W, CTRL_X, CTRL_Y, CTRL_Z, CTRL_3, CTRL_4, CTRL_5, CTRL_6, CTRL_7
 };
 
-enum mouse_traps					// At least two codes are required for correct mouse reporting: reporting + encoding.
-{									//  Examples: 'set_mouse_trap(ON, REP_ALL_MOVE|ENC_DECIMAL1)', 'puts("\e[?1003h\e[?1006h")'
-	REP_BTN_PUSH	= 0b0000001,	// reporting: '\e[?1000h' - X11 mouse reporting, reports on button press and release.
-	REP_HIGHLIGH	= 0b0000010,	// reporting: '\e[?1001h' - highlight reporting, useful for reporting mouse highlights.
-	REP_BTN_MOVE	= 0b0000100,	// reporting: '\e[?1002h' - button movement reporting, reports movement when a button is pressed.
-	REP_ALL_MOVE	= 0b0001000,	// reporting: '\e[?1003h' - all movement reporting, reports all movements.
-	ENC_UNI_UTF8	= 0b0010000,	//  encoding: '\e[?1005h' - report back encoded as utf-8 (xterm, urxvt, broken in several ways).
-	ENC_DECIMAL1	= 0b0100000,	//  encoding: '\e[?1006h' - back as decimal values (xterm, many other terminal emulators, but not urxvt).
-	ENC_DECIMAL2	= 0b1000000 	//  encoding: '\e[?1015h' - report back as decimal values (urxvt, xterm, other terminal emulators).
+enum mouse_traps
+{													// Examples: 'set_mouse_trap(ON, SET_ANY_EVENT_MOUSE | SET_EXT_MODE_MOUSE)' is same as 'puts("\e[?1003h\e[?1006h")'
+	SET_VT200_MOUSE           = 0b0000000000000001,	// Esc code: '\e[?1000h' - X11 mouse reporting, reports on button press and release.
+	SET_VT200_HIGHLIGHT_MOUSE = 0b0000000000000010,	// Esc code: '\e[?1001h' - highlight reporting, useful for reporting mouse highlights.
+	SET_BTN_EVENT_MOUSE       = 0b0000000000000100,	// Esc code: '\e[?1002h' - button movement reporting, reports movement when a button is pressed.
+	SET_ANY_EVENT_MOUSE       = 0b0000000000001000,	// Esc code: '\e[?1003h' - all movement reporting, reports all movements.
+	SET_FOCUS_EVENT_MOUSE     = 0b0000000000010000,	// Esc code: '\e[?1004h' - it causes xterm to send CSI I when the terminal gains focus, and CSI O when it loses focus.
+	SET_ALTERNATE_SCROLL      = 0b0000000000100000,	// Esc code: '\e[?1005h' - report back encoded as utf-8 (xterm, urxvt, broken in several ways).
+	SET_EXT_MODE_MOUSE        = 0b0000000001000000,	// Esc code: '\e[?1006h' - back as decimal values (xterm, many other terminal emulators, but not urxvt).
+	SET_SGR_EXT_MODE_MOUSE    = 0b0000000010000000,	// Esc code: '\e[?1007h' - wheel mouse may send cursor-keys.
+	SET_URXVT_EXT_MODE_MOUSE  = 0b0000000100000000,	// Esc code: '\e[?1015h' - report back as decimal values (urxvt, xterm, other terminal emulators).
+	SET_PIXEL_POSITION_MOUSE  = 0b0000001000000000,	// Esc code: '\e[?1016h' - like 1006, but reports pixels not chars.
+	SET_BUTTON1_MOVE_POINT    = 0b0000010000000000,	// Esc code: '\e[?2001h' - click1 emit Esc seq to move point.
+	SET_BUTTON2_MOVE_POINT    = 0b0000100000000000,	// Esc code: '\e[?2002h' - press2 emit Esc seq to move point.
+	SET_DBUTTON3_DELETE       = 0b0001000000000000,	// Esc code: '\e[?2003h' - double click-3 deletes.
+	SET_PASTE_IN_BRACKET      = 0b0010000000000000,	// Esc code: '\e[?2004h' - surround paste by escapes.
+	SET_PASTE_QUOTE           = 0b0100000000000000,	// Esc code: '\e[?2005h' - quote each char during paste.
+	SET_PASTE_LITERAL_NL      = 0b1000000000000000,	// Esc code: '\e[?2006h' - paste "\n" as C-j.
 };
 
 enum km_events
@@ -44,7 +53,7 @@ enum km_events
 };
 
 enum mouse_events {
-	CTRL = 16, ALT = 8, DRAG = 32, // Modifiers
+	SHIFT = 4, ALT = 8, CTRL = 16, DRAG = 32, // Modifiers
 	LEFT_BUTTON_PRESSED = 0, LEFT_BUTTON_RELEASED = 100, WHEEL_BUTTON_PRESSED = 1,
 	WHEEL_BUTTON_RELEASED = 101, RIGHT_BUTTON_PRESSED = 2, RIGHT_BUTTON_RELEASED = 102,
 	NO_BUTTON_PRESSED = 3, WHEEL_SCROLL_DOWN = 65, WHEEL_SCROLL_UP = 64

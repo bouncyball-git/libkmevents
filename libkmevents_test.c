@@ -34,7 +34,7 @@ int main()
 	tab = '\t';
 #endif
 	set_term_attr(ON);
-	set_mouse_trap(ON, REP_ALL_MOVE | ENC_DECIMAL1);
+	set_mouse_trap(ON, SET_ANY_EVENT_MOUSE | SET_EXT_MODE_MOUSE);
 
 	while(1) {    
 		ret = get_event(&kme, INF); // 2nd param: wait 'timeout' in miliseconds. 'INF' for infinity.
