@@ -16,7 +16,7 @@ extern "C" {f
 enum special_keys {
 	UP_KEY = 'A', DOWN_KEY = 'B', RIGHT_KEY = 'C', LEFT_KEY = 'D', END_KEY = 'F', HOME_KEY = 'H', F1_KEY = 'P', F2_KEY = 'Q', F3_KEY = 'R', F4_KEY = 'S',
 	INSERT_KEY = 50, DELETE_KEY = 51, PGUP_KEY = 53, PGDN_KEY = 54, F5_KEY = 15, F6_KEY = 17, F7_KEY = 18, F8_KEY = 19, F9_KEY = 20, F10_KEY = 21, F11_KEY = 23, F12_KEY = 24,
-	NULL_KEY = 0, TAB_KEY = 9, ENTER_KEY = 10, ESC_KEY = 27, SPACE_KEY = 32, BACKSPACE_KEY = 127
+	NULL_KEY = 0, TAB_KEY = 9, ENTER_KEY = 13, ESC_KEY = 27, SPACE_KEY = 32, BACKSPACE_KEY = 127
 };
 
 enum control_chars {
