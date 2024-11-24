@@ -161,7 +161,10 @@ int get_event(km_event *kme, int timeout)
 					case 3: // UP, DOWN, RIGHT, LEFT, HOME, END, F1..F4
 						ret = sscanf((const char*)buf, "\e%c%c", &chtmp, &kme->ch); // Navigation
 						if(ret == 2) { 
-							if(chtmp == '[') { kme->event = KE_NAVIGATION; break; }
+							if(chtmp == '[') { 
+								if(kme->ch == 'I' || kme->ch == 'O') { kme->event = ME_FOCUS; break; }
+								kme->event = KE_NAVIGATION; break; 
+							}
 							if(chtmp == 'O') { kme->event = KE_FUNCTION; break; }
 						}
 						kme->event = KE_UNKNOWN;

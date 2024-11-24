@@ -9,7 +9,7 @@ static struct skeys_t {
 } skeys[] = {
 	{ 'A', "UP" }, { 'B', "DOWN" }, { 'C', "RIGHT" }, { 'D', "LEFT" }, { 'F', "END" }, { 'H', "HOME" }, { 'P', "F1" }, { 'Q', "F2" }, { 'R', "F3" }, { 'S', "F4" },
 	{ 50, "INSERT" }, { 51, "DELETE" }, { 53, "PGUP" }, { 54, "PGDN" }, { 15, "F5" }, { 17, "F6" }, { 18, "F7" }, { 19, "F8" }, { 20, "F9" }, { 21, "F10" }, { 23, "F11" }, { 24, "F12" },
-	{ 0, "NULL" }, { 9, "TAB" }, { 10, "ENTER" }, { 27, "ESC" }, { 32, "SPACE" }, { 127, "BACKSPACE" }, { 255, "NONE" }
+	{ 0, "NULL" }, { 9, "TAB" }, { 10, "ENTER" }, { 27, "ESC" }, { 32, "SPACE" }, { 127, "BACKSPACE" }, { -1, "NONE" }
 };
 
 static const unsigned char ctrl_chars[32][7] = {
@@ -20,7 +20,7 @@ static const unsigned char ctrl_chars[32][7] = {
 
 static int get_index(char ch) {
 	int i = 0;
-	for(i = 0; skeys[i].ch != 255; i++)
+	for(i = 0; skeys[i].ch != -1; i++)
 		if(skeys[i].ch == ch) return i;
 	return i;
 }
@@ -34,7 +34,7 @@ int main()
 	tab = '\t';
 #endif
 	set_term_attr(ON);
-	set_mouse_trap(ON, SET_ANY_EVENT_MOUSE | SET_EXT_MODE_MOUSE);
+	set_mouse_trap(ON, SET_ANY_EVENT_MOUSE | SET_FOCUS_EVENT_MOUSE | SET_EXT_MODE_MOUSE);
 
 	while(1) {    
 		ret = get_event(&kme, INF); // 2nd param: wait 'timeout' in miliseconds. 'INF' for infinity.
@@ -265,6 +265,16 @@ int main()
 						break;
 					case CTRL + ALT + WHEEL_SCROLL_DOWN:
 						printf("%c%s\r\n", tab, "CTRL + ALT + MOUSE WHEEL SCROLL DOWN");
+						break;
+				}
+				break;
+			case ME_FOCUS:
+				switch(kme.ch) {
+					case FOCUS_IN:
+						printf("%c%s\r\n", tab, "MOUSE FOCUS IN");
+						break;
+					case FOCUS_OUT:
+						printf("%c%s\r\n", tab, "MOUSE FOCUS OUT");
 						break;
 				}
 				break;
