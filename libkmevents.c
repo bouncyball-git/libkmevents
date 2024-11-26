@@ -169,14 +169,16 @@ int get_event(km_event *kme, int timeout)
 						}
 						kme->event = KE_UNKNOWN;
 						break;
-					case 4: // INSERT, DELETE, PGUP, PGDN, CTRL or ALT or WIN + F1..F4
+					case 4: // INSERT, DELETE, PGUP, PGDN, SHIFT or CTRL or ALT or WIN + F1..F4
 						ret = sscanf((const char*)buf, "\e[%c~", &kme->ch);
 						if(ret == 1) { kme->event = KE_NAVIGATION; break; }
 						ret = sscanf((const char*)buf, "\eO%c%c", &chtmp, &kme->ch);
 						if(ret == 2) { 
 							if(chtmp == '1') { kme->event = KE_WIN_FUNCTION; break; }
+							if(chtmp == '2') { kme->event = KE_SHIFT_FUNCTION; break; }
 							if(chtmp == '3') { kme->event = KE_ALT_FUNCTION; break; }
 							if(chtmp == '5') { kme->event = KE_CTRL_FUNCTION; break; }
+							if(chtmp == '6') { kme->event = KE_SHIFT_CTRL_FUNCTION; break; }
 							if(chtmp == '7') { kme->event = KE_CTRL_ALT_FUNCTION; break; }
 						}
 						kme->event = KE_UNKNOWN;
@@ -186,30 +188,36 @@ int get_event(km_event *kme, int timeout)
 						if(ret == 1) { kme->event = KE_FUNCTION; kme->ch = chint; break; }
 						kme->event = KE_UNKNOWN;
 						break;
-					case 6: // CTRL or ALT or WIN + NAVIGATION
+					case 6: // SHIFT or CTRL or ALT or WIN + NAVIGATION
 						ret = sscanf((const char*)buf, "\e[1;%c%c",  &chtmp, &kme->ch);
 						if(ret == 2) { // UP, DOWN, RIGHT, LEFT, HOME, END
 							if(chtmp == '1') { kme->event = KE_WIN_NAVIGATION; break; }
+							if(chtmp == '2') { kme->event = KE_SHIFT_NAVIGATION; break; }
 							if(chtmp == '3') { kme->event = KE_ALT_NAVIGATION; break; }
 							if(chtmp == '5') { kme->event = KE_CTRL_NAVIGATION; break; }
+							if(chtmp == '6') { kme->event = KE_SHIFT_CTRL_NAVIGATION; break; }
 							if(chtmp == '7') { kme->event = KE_CTRL_ALT_NAVIGATION; break; }
 						}
 						ret = sscanf((const char*)buf, "\e[%c;%c~", &kme->ch, &chtmp);
 						if(ret == 2) { // INSERT, DELETE, PGUP, PGDN
 							if(chtmp == '1') { kme->event = KE_WIN_NAVIGATION; break; }
+							if(chtmp == '2') { kme->event = KE_SHIFT_NAVIGATION; break; }
 							if(chtmp == '3') { kme->event = KE_ALT_NAVIGATION; break; }
 							if(chtmp == '5') { kme->event = KE_CTRL_NAVIGATION; break; }
+							if(chtmp == '6') { kme->event = KE_SHIFT_CTRL_NAVIGATION; break; }
 							if(chtmp == '7') { kme->event = KE_CTRL_ALT_NAVIGATION; break; }
 						}	
 						kme->event = KE_UNKNOWN;
 						break;
-					case 7: // CTRL F5..F12
+					case 7: // SHIFT or CTRL WIN or ALT + F5..F12
 						ret = sscanf((const char*)buf, "\e[%u;%c~", &chint, &chtmp);
 						if(ret == 2) {
 							kme->ch = chint;
 							if(chtmp == '1') { kme->event = KE_WIN_FUNCTION; break; }
+							if(chtmp == '2') { kme->event = KE_SHIFT_FUNCTION; break; }
 							if(chtmp == '3') { kme->event = KE_ALT_FUNCTION; break; }
 							if(chtmp == '5') { kme->event = KE_CTRL_FUNCTION; break; }
+							if(chtmp == '6') { kme->event = KE_SHIFT_CTRL_FUNCTION; break; }
 							if(chtmp == '7') { kme->event = KE_CTRL_ALT_FUNCTION; break; }
 						}	
 						kme->event = KE_UNKNOWN;

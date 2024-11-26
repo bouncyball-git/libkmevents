@@ -82,6 +82,9 @@ int main()
 			case KE_FUNCTION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
+			case KE_SHIFT_FUNCTION:
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				break;
 			case KE_CTRL_FUNCTION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
@@ -91,11 +94,17 @@ int main()
 			case KE_WIN_FUNCTION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
+			case KE_SHIFT_CTRL_FUNCTION:
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				break;
 			case KE_CTRL_ALT_FUNCTION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
 			case KE_NAVIGATION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				break;
+			case KE_SHIFT_NAVIGATION:
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
 			case KE_CTRL_NAVIGATION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
@@ -108,6 +117,9 @@ int main()
 				break;
 			case KE_CTRL_ALT_NAVIGATION:
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				break;
+			case KE_SHIFT_CTRL_NAVIGATION:
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
 				break;
 			case KE_UNKNOWN:
 				printf("%c%s\tKEY:%d (0x%x)\r\n", tab, "UNKNOWN EVENT", kme.ch, kme.ch);
