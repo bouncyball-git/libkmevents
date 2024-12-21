@@ -15,7 +15,7 @@
 #define MAX_EVENTS 2  // Epoll is handling two types of events: stdin and signals
 
 #ifdef __cplusplus
-extern "C" {f
+extern "C" {
 #endif
 
 enum special_keys {
