@@ -1,4 +1,4 @@
-Small library for capturing keyboard and mouse events in terminal.
+Small library for capturing keyboard, mouse and signal events in terminal.
 
 In header file uncomment:
 * #define DEBUG_INFO - for useful debug information.
