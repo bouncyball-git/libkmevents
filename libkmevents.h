@@ -1,13 +1,18 @@
 #ifndef LIBKMEVENT_H
 #define LIBKMEVENT_H
 
-//#define DEBUG_INFO
-//#define DEBUG_ECHO
+#define DEBUG_INFO
+#define DEBUG_ECHO
 
 #define	OFF 0
 #define ON 1
-#define	INF -1 // epol_wait() infinite wait flag
+#define	INF -1 // epoll wait: infinite wait flag
+#define	STDIN_READY 0 // Standard input ready for read
+#define	TIMEOUT -1 // epoll timeout
+#define	ERROR -2 // any epoll or signal error
+#define	CLOSE -3 // epoll close: close descriptor flag
 #define BUFLEN 16 // In case of double mouse event 32 (2*14 chars). Otherwise 16 is enough.
+#define MAX_EVENTS 2  // Epoll is handling two types of events: stdin and signals
 
 #ifdef __cplusplus
 extern "C" {f
@@ -55,7 +60,7 @@ enum km_events
 	KE_NAVIGATION, KE_SHIFT_NAVIGATION, KE_SHIFT_CTRL_NAVIGATION, KE_CTRL_NAVIGATION, KE_WIN_NAVIGATION,
 	KE_ALT_NAVIGATION, KE_CTRL_ALT_NAVIGATION, KE_CTRL_WIN_NAVIGATION, KE_WIN_ALT_NAVIGATION, KE_CTRL_WIN_ALT_NAVIGATION,
 	
-	ME_BUTTON, ME_MOVE, ME_SCROLL, ME_FOCUS
+	ME_BUTTON, ME_MOVE, ME_SCROLL, ME_FOCUS, SE_SIGNAL
 };
 
 enum mouse_events {

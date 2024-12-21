@@ -1,40 +1,125 @@
+#define _POSIX_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
 #include <sys/epoll.h>
+#include <sys/signalfd.h>
+#include <signal.h>
+#include <errno.h>
 #include "libkmevents.h"
 
-static int stdin_ready(int timeout)
+static int event_ready(int timeout)
 {
-    int retval;
-	static int epoll_fd;
-    static struct epoll_event event;
+	static sigset_t sigmask;
+	static int signal_fd = 0;
+	static int epoll_fd = 0;
+	static struct epoll_event events[MAX_EVENTS];
 
-    if(epoll_fd == 0) {
-		// Create an epoll instance
-    	epoll_fd = epoll_create(1);
-    	if (epoll_fd == -1) {
-        	bale_out("Error: epoll_create\r\n");
-    	}
-
-    	// Initialize the epoll event structure
-    	event.events = EPOLLIN; // Wait for input events
-    	event.data.fd = 0; // Standard input
-
-    	// Add the file descriptor to the epoll instance
-    	retval = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, 0, &event);
-    	if (retval == -1) {
-        	bale_out("Error: epoll_ctl\r\n");
-    	}
+	if (timeout == CLOSE)
+	{
+		close(signal_fd);
+		signal_fd = 0;
+		close(epoll_fd);
+		epoll_fd = 0;
+		return CLOSE;
 	}
-    // Wait for one events 'timeout' amount of time
-	retval = epoll_wait(epoll_fd, &event, 1, timeout);
-    if (retval == -1) {
-        bale_out("Error: epoll_wait\r\n");
+
+    if(epoll_fd == 0 && signal_fd == 0)
+	{
+		// Initialize the signal set (SIGINT, SIGTERM, SIGHUP, SIGWINCH)
+	    sigemptyset(&sigmask);
+	    sigaddset(&sigmask, SIGINT);    // Add SIGINT
+	    sigaddset(&sigmask, SIGTERM);   // Add SIGTERM
+	    sigaddset(&sigmask, SIGHUP);    // Add SIGHUP
+	    sigaddset(&sigmask, SIGWINCH);  // Add SIGWINCH
+
+	    // Block the signals to be handled with signalfd
+	    if (sigprocmask(0, &sigmask, NULL) == -1)
+		{
+	        perror("sigprocmask");
+			return ERROR;
+	    }
+
+	    // Create a signalfd to handle multiple signals
+	    signal_fd = signalfd(-1, &sigmask, SFD_NONBLOCK);
+	    if (signal_fd == -1)
+		{
+	        perror("signalfd");
+			return ERROR;
+	    }
+
+	    // Create an epoll instance
+	    epoll_fd = epoll_create1(0);
+	    if (epoll_fd == -1)
+		{
+	        perror("epoll_create1");
+			return ERROR;
+	    }
+
+	    // Add stdin (fd 0) to the epoll set for reading
+	    struct epoll_event event_stdin;
+	    event_stdin.events = EPOLLIN;  // We are interested in reading from stdin
+	    event_stdin.data.fd = STDIN_FILENO;
+	    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, STDIN_FILENO, &event_stdin) == -1)
+		{
+	        perror("epoll_ctl - stdin");
+	        close(epoll_fd);
+	        close(signal_fd);
+			return ERROR;
+	    }
+
+	    // Add the signal file descriptor to the epoll set
+	    struct epoll_event event_signal;
+	    event_signal.events = EPOLLIN;  // We are interested in reading from the signal fd
+	    event_signal.data.fd = signal_fd;
+	    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, signal_fd, &event_signal) == -1)
+		{
+	        perror("epoll_ctl - signal fd");
+	        close(epoll_fd);
+	        close(signal_fd);
+			return ERROR;
+	    }
+	}
+
+    // Use epoll_pwait to wait for events (stdin or signal)
+    int ret = epoll_pwait(epoll_fd, events, MAX_EVENTS, -1, &sigmask);
+    switch(ret)
+	{
+		case -1: // Interrupt signal
+   			if (errno != EINTR)
+			{
+				perror("epoll_pwait");
+        		close(epoll_fd);
+        		close(signal_fd);
+				return ERROR;
+			}
+			break;
+		case 0: // Epoll timed out
+			return TIMEOUT;
     }
 
-	return retval;
+	for (int i = 0; i < ret; i++)
+	{
+    	if (events[i].data.fd == STDIN_FILENO)
+			return STDIN_READY;
+        else if (events[i].data.fd == signal_fd)
+		{
+        	// Handle received signals (via signalfd)
+            struct signalfd_siginfo siginfo;
+            ssize_t len = read(signal_fd, &siginfo, sizeof(siginfo));
+            if (len != sizeof(siginfo))
+			{
+                perror("read - signalfd");
+                close(epoll_fd);
+                close(signal_fd);
+				return ERROR;
+            }
+            return siginfo.ssi_signo;
+		}
+	}
+	return ERROR;
 }
 
 void bale_out(const char *msg)
@@ -59,6 +144,7 @@ void bale_out(const char *msg)
 	);
 
 	set_term_attr(OFF);
+	event_ready(CLOSE);
 	if(msg) { perror(msg); exit(EXIT_FAILURE); }
 	exit(EXIT_SUCCESS);
 }
@@ -132,14 +218,28 @@ int get_event(km_event *kme, int timeout)
 	// Zero kme fields
 	kme->event = 0; kme->ch = 0; kme->x = 0; kme->y = 0;
 
-	// Check if stdin has data
-	ret = stdin_ready(timeout);
-	if(ret > 0) { // Data available
+	// Check which event occurred
+	ret = event_ready(timeout);
+	if (ret == TIMEOUT || ret == CLOSE)
+	{   // Buffer is empty
+		kme->ch = buf[0];
+		kme->event = KE_NULL;
+		return ret; // Timeout
+	}
+	else if (ret > 0)
+	{   // Error, Signal interrupt
+		kme->event = SE_SIGNAL;
+		kme->ch = ret;
+		return ret; // Signal
+	}
+	else if(ret == STDIN_READY)
+	{   // Stdin data available
 		chars_read = read(fileno(stdin), buf, sizeof(buf));
 		if (!chars_read) { 
 			perror("Error: failed reading from stdin\r\n");
-			return -1;
+			return ERROR;
 		}
+
 #ifdef DEBUG_INFO
 		for(int i = 0; i < chars_read; i++)
 			if(buf[i] == '\e')
@@ -147,6 +247,7 @@ int get_event(km_event *kme, int timeout)
 			else
 				printf("%s buf[%d]   %c   %d   0x%x\n", (i == 0) ? "\r\n" : "\r", i, buf[i], buf[i], buf[i]);
 #endif
+
 		switch(buf[0]) {
 			case ESC_KEY: // If escape sequence
 				switch(chars_read) {
@@ -263,14 +364,12 @@ int get_event(km_event *kme, int timeout)
 				}
 				break;
 		}
-		ret = 0; // Event read
-	} else if (!ret) { // Buffer is empty
-		kme->ch = buf[0];
-		kme->event = KE_NULL;
-		ret = 1; // Timeout
+		return STDIN_READY; // Stdin event
 	}
+
 #ifdef DEBUG_INFO
 	printf("\r kme_event: %d, kme_ch: %d, x: %d, y: %d, mbtn_state: %c\r\n", kme->event, kme->ch, kme->x, kme->y, mbtn_state);
 #endif
+
 	return ret;
 }

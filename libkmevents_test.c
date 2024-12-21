@@ -3,13 +3,21 @@
 #include <signal.h>
 #include "libkmevents.h"
 
-static struct skeys_t {
+typedef struct names_t {
 	char ch;
 	const unsigned char name[10];
-} skeys[] = {
+} names_t;
+
+static names_t skeys[] = {
 	{ 'A', "UP" }, { 'B', "DOWN" }, { 'C', "RIGHT" }, { 'D', "LEFT" }, { 'F', "END" }, { 'H', "HOME" }, { 'P', "F1" }, { 'Q', "F2" }, { 'R', "F3" }, { 'S', "F4" },
 	{ 50, "INSERT" }, { 51, "DELETE" }, { 53, "PGUP" }, { 54, "PGDN" }, { 15, "F5" }, { 17, "F6" }, { 18, "F7" }, { 19, "F8" }, { 20, "F9" }, { 21, "F10" }, { 23, "F11" }, { 24, "F12" },
 	{ 0, "NULL" }, { 9, "TAB" }, { 10, "ENTER" }, { 27, "ESC" }, { 32, "SPACE" }, { 127, "BACKSPACE" }, { -1, "NONE" }
+};
+
+static names_t signals[] = {
+	{ 1, "SIGHUP" }, { 2, "SIGINT" }, { 3, "SIGQUIT" },	{ 4, "SIGILL" }, { 5, "SIGTRAP" },
+	{ 6, "SIGABRT" }, { 8, "SIGFPE" }, { 9, "SIGKILL" }, { 11, "SIGSEGV" },
+	{ 13, "SIGPIPE" }, { 14, "SIGALRM" }, { 15, "SIGTERM" }, { 28, "SIGWINCH" }
 };
 
 static const unsigned char ctrl_chars[32][7] = {
@@ -18,10 +26,10 @@ static const unsigned char ctrl_chars[32][7] = {
 	"^P", "^Q", "^R", "^S", "^T", "^U", "^V", "^W",
 	"^X", "^Y", "^Z", "ESC", "^4", "^5", "^6", "^7" };
 
-static int get_index(char ch) {
+static int get_index(char ch, struct names_t *names) {
 	int i = 0;
-	for(i = 0; skeys[i].ch != -1; i++)
-		if(skeys[i].ch == ch) return i;
+	for(i = 0; names[i].ch != -1; i++)
+		if(names[i].ch == ch) return i;
 	return i;
 }
 
@@ -30,25 +38,32 @@ int main()
 	km_event kme = { 0 };
 	int ret = 0;
 	char tab = ' ';
+
 #ifdef DEBUG_ECHO
 	tab = '\t';
 #endif
+
 	set_term_attr(ON);
-	set_mouse_trap(ON, SET_ANY_EVENT_MOUSE | SET_FOCUS_EVENT_MOUSE | SET_EXT_MODE_MOUSE);
+	set_mouse_trap(ON, SET_ANY_EVENT_MOUSE|SET_FOCUS_EVENT_MOUSE|SET_EXT_MODE_MOUSE);
 
 	while(1) {    
 		ret = get_event(&kme, INF); // 2nd param: wait 'timeout' in miliseconds. 'INF' for infinity.
-		if(ret == -1) {
-			printf(" Error: get_event() failure. ret = %d\r\n", ret);
+		if(ret == ERROR) {
+			printf("\n\r Error: get_event() failure. ret = %d\r\n", ret);
 			break;
 		}
+
 #ifdef DEBUG_INFO
-		else if (ret == 1)
-			printf(" Debug: get_event() timeout. ret = %d\r\n", ret);
-		else
-			printf(" Debug: get_event() success. ret = %d\r\n", ret);
+		else if (ret == TIMEOUT)
+			printf("\n\r Debug: get_event() timeout. ret = %d\r\n", ret);
+		else if (ret >= 0)
+			printf("\n\r Debug: get_event() success. ret = %d\r\n", ret);
 #endif
+
 		switch (kme.event) {
+			case SE_SIGNAL:
+				printf("%c%s\t %s:%d (0x%x)\r\n", tab, "SIGNAL RECEIVED", signals[get_index(kme.ch, signals)].name, kme.ch, kme.ch);
+				break;
 			case KE_NULL:
 				printf("%c%s\tKEY:%d (0x%x)\r\n", tab, "NO EVENTS RECEIVED", kme.ch, kme.ch);
 				break;	
@@ -80,46 +95,46 @@ int main()
 				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + ALT + CONTROL CHAR", ctrl_chars[kme.ch], kme.ch);
 				break;
 			case KE_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_SHIFT_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_CTRL_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_ALT_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "ALT + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "ALT + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_WIN_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_SHIFT_CTRL_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_CTRL_ALT_FUNCTION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + FUNCTION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + FUNCTION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_SHIFT_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_CTRL_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_ALT_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "ALT + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "ALT + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_WIN_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "WIN + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_CTRL_ALT_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "CTRL + ALT + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_SHIFT_CTRL_NAVIGATION:
-				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + NAVIGATION KEY", skeys[get_index(kme.ch)].name, kme.ch);
+				printf("%c%s\tKEY:%s (0x%x)\r\n", tab, "SHIFT + CTRL + NAVIGATION KEY", skeys[get_index(kme.ch, skeys)].name, kme.ch);
 				break;
 			case KE_UNKNOWN:
 				printf("%c%s\tKEY:%d (0x%x)\r\n", tab, "UNKNOWN EVENT", kme.ch, kme.ch);
