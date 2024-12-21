@@ -1,8 +1,8 @@
 #ifndef LIBKMEVENT_H
 #define LIBKMEVENT_H
 
-#define DEBUG_INFO
-#define DEBUG_ECHO
+//#define DEBUG_INFO
+//#define DEBUG_ECHO
 
 #define	OFF 0
 #define ON 1

@@ -84,7 +84,7 @@ static int event_ready(int timeout)
 	}
 
     // Use epoll_pwait to wait for events (stdin or signal)
-    int ret = epoll_pwait(epoll_fd, events, MAX_EVENTS, -1, &sigmask);
+    int ret = epoll_pwait(epoll_fd, events, MAX_EVENTS, timeout, &sigmask);
     switch(ret)
 	{
 		case -1: // Interrupt signal
